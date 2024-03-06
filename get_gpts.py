@@ -1,26 +1,29 @@
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import time
+from time import sleep
 import re
 import random
+import subprocess
 
-waiting = True
+more_gpts = True
+waiting = 5
+path = "gpts3.txt"
 
 def call_more_GPTs(driver):
-    if driver.current_url != "https://chat.openai.com/gpts":
-        driver.get("https://chat.openai.com/gpts")
-        time.sleep(2)
-    for i in range(6, 15):
-        driver.find_element_by_xpath(f'//*[@id="__next"]/div[1]/div/main/div/div[2]/div[{i}]/div[2]/button').click()
-        if waiting:
-            time.sleep(random.uniform(0, 2))
+    elements = driver.find_elements_by_css_selector("button > div.flex")[1:]
+
+    for e in elements:
+        try:
+            e.click()
+        except:
+            pass
 
 
 def get_GPTs_list(driver):
-    if driver.current_url != "https://chat.openai.com/gpts":
-        driver.get("https://chat.openai.com/gpts")
-        time.sleep(2)
+    # if driver.current_url != "https://chat.openai.com/gpts":
+    #     driver.get("https://chat.openai.com/gpts")
+    #     sleep(2)
 
     prefix = "https://chat.openai.com"
     html_text = driver.page_source
@@ -30,11 +33,30 @@ def get_GPTs_list(driver):
     href_list = [prefix + url for url in href_list]
     return href_list
 
+command = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '--remote-debugging-port=9222',
+    '--no-first-run',
+    '--no-default-browser-check',
+    "https://chat.openai.com/gpts"
+]
+process = subprocess.Popen(command)
+
+sleep(waiting)
+
 chrome_options = Options()
 chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 driver = webdriver.Chrome(options=chrome_options)
+if more_gpts:
+    call_more_GPTs(driver)
+    sleep(waiting)
+    call_more_GPTs(driver)
+    sleep(waiting)
 href_list = get_GPTs_list(driver)
 
-with open("gpts2.txt", "w") as f:
+with open(path, "w") as f:
     for h in href_list:
         f.write(f"{h}\n")
+
+sleep(waiting * 3.5)
+process.terminate()
